@@ -1,0 +1,53 @@
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>QRコードにドット絵を描くツール @dododo-shirouto</title>
+
+    <link rel="stylesheet" href="https://cdn.simplecss.org/simple.css" />
+    <link
+      rel="stylesheet"
+      href="https://dododoshirouto.github.io/dodo-simple.css/sample/dodo-simple.css"
+    />
+    <script src="https://mymp.dodoneko.site/new/scripts/ref.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <link rel="stylesheet" href="style.css" />
+    <script src="main.js"></script>
+  </head>
+  <body>
+    <main>
+      <h1>QRコードにドット絵を描くツール</h1>
+      <form id="qr-form">
+        <label for="url">URL入力：</label>
+        <input
+          type="text"
+          id="url"
+          name="url"
+          placeholder="https://example.com"
+          required
+          value="https://x.com/super_amateur_c"
+        />
+
+        <label for="size">セル数：</label>
+        <select id="size"></select>
+        <script>
+            let elem_select = document.querySelector("#size");
+            for (let i=1; i<=40; i++) {
+                let option = document.createElement("option");
+                let size = i*4 + 17;
+                option.value = size;
+                option.text = `${size}×${size} (バージョン${i})`;
+                elem_select.appendChild(option);
+                if (i==4) {
+                    option.selected = true;
+                }
+            }
+        </script>
+
+        <button type="button" onclick="onGenerateClick()">QR生成</button>
+      </form>
+
+      <div id="qr-output" style="margin-top: 1em"></div>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+#qr-output img {
+    min-width: 50vw;
+    image-rendering: pixelated;
+
+    background: white;
+    padding: calc(200% / 33);
+}
