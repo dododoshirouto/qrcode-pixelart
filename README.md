@@ -14,6 +14,7 @@ For those who want to make a QR Code with a difference
 
 ![image](https://github.com/user-attachments/assets/d8b32e03-0232-433a-8c45-acfb757783fa)
 
+https://github.com/user-attachments/assets/a15d225c-b154-482f-b914-6edb909e5db6
 
 ## 動作の概要
 
