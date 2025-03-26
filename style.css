@@ -1,11 +1,13 @@
 #qr-output {
     position: relative;
 }
+#qr-modified-output canvas ,
 #qr-output canvas {
     min-width: 50vw;
     image-rendering: pixelated;
     padding: calc(200% / 33);
 }
+#qr-modified-output canvas:not([id]) ,
 #qr-output canvas:not([id]) {
     background: white;
 
