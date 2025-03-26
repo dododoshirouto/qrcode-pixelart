@@ -18,7 +18,7 @@
   <body>
     <main>
       <h1>QRコードにドット絵を描くツール</h1>
-      <form id="qr-form">
+      <div id="qr-form">
         <label for="url">URL入力：</label>
         <input
           type="text"
@@ -46,11 +46,16 @@
         </script>
 
         <button type="button" onclick="onGenerateClick()">QR生成</button>
-      </form>
+      </div>
 
       <div id="qr-output" style="margin-top: 1em">
         <canvas id="overlay-canvas" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
       </div>
+
+      <button type="button" onclick="onGenerateModifiedClick()">描いたドット絵で再生成</button>
+      <div id="qr-modified-output" style="margin-top: 1em;"></div>
+
+      
     </main>
   </body>
 </html>

@@ -8,6 +8,17 @@ QRCodeModel.prototype.getCodewordPositionMap = function () {
     return this.codewordPositionMap || [];
 };
 
+QRCodeModel.prototype.makeWithMask = function (maskPattern) {
+    this.makeImpl(false, maskPattern); // 強制的に指定マスクでQRを作る
+};
+
+// makeImpl を拡張して、使われたマスク番号を保存する
+const originalMakeImpl = QRCodeModel.prototype.makeImpl;
+QRCodeModel.prototype.makeImpl = function (test, maskPattern) {
+    this.usedMaskPattern = maskPattern; // ← 使われたマスク番号を保存
+    return originalMakeImpl.call(this, test, maskPattern);
+};
+
 const originalMapData = QRCodeModel.prototype.mapData;
 QRCodeModel.prototype.mapData = function (data, maskPattern) {
     var inc = -1;
@@ -24,7 +35,7 @@ QRCodeModel.prototype.mapData = function (data, maskPattern) {
                     var dark = false;
                     if (byteIndex < data.length) {
                         dark = ((data[byteIndex] >>> bitIndex) & 1) == 1;
-                        this.codewordPositionMap.push([col - c, row]);
+                        this.codewordPositionMap.push({ x: col - c, y: row, mask: QRUtil.getMask(maskPattern, row, col - c) });
                     }
                     var mask = QRUtil.getMask(maskPattern, row, col - c);
                     if (mask) dark = !dark;
@@ -44,19 +55,25 @@ QRCodeModel.prototype.mapData = function (data, maskPattern) {
             }
         }
     }
+    this.usedMaskPattern = maskPattern;
     console.log("[myqrcode.js] codewordPositionMap count:", this.codewordPositionMap.length);
 };
 
 class MyQRCode {
-    constructor(text, version, cellSize = 8, correctLevel = QRCode.CorrectLevel.L) {
+    constructor(text, version, cellSize = 8, correctLevel = QRCode.CorrectLevel.L, fixedMask = null) {
         this.text = text;
         this.version = version;
         this.cellSize = cellSize;
         this.correctLevel = correctLevel;
+        this.fixedMask = fixedMask; // ← 指定があれば使う！
 
         this.qr = new QRCodeModel(this.version, this.correctLevel);
         this.qr.addData(this.text);
-        this.qr.make();
+        if (this.fixedMask === null) {
+            this.qr.make();
+        } else {
+            this.qr.makeWithMask(this.fixedMask);
+        }
 
         this.moduleCount = this.qr.getModuleCount();
         this.size = this.moduleCount * this.cellSize;
@@ -95,25 +112,19 @@ class MyQRCode {
     }
 
     isEditableCell(x, y) {
-        return this.editablePositions.some(([ex, ey]) => ex === x && ey === y);
+        return this.editablePositions.some(({ x: ex, y: ey }) => ex === x && ey === y);
     }
 
     enableDrawing() {
         this.canvas.addEventListener('click', (e) => {
             const rect = this.canvas.getBoundingClientRect();
             const style = getComputedStyle(this.canvas);
-
-            // paddingのCSS値（px）を取得
             const padLeft = parseFloat(style.paddingLeft || 0);
             const padTop = parseFloat(style.paddingTop || 0);
-
-            // 実際のcanvasピクセルに対して、CSSスケーリング補正（padding込み）
             const scaleX = this.canvas.width / (rect.width - padLeft * 2);
             const scaleY = this.canvas.height / (rect.height - padTop * 2);
-
             const offsetX = (e.clientX - rect.left - padLeft) * scaleX;
             const offsetY = (e.clientY - rect.top - padTop) * scaleY;
-
             const x = Math.floor(offsetX / this.cellSize);
             const y = Math.floor(offsetY / this.cellSize);
 
@@ -124,6 +135,15 @@ class MyQRCode {
                 this.render();
             }
         });
+
+        
+        for (let y = 0; y < this.moduleCount; y++) {
+            for (let x = 0; x < this.moduleCount; x++) {
+                if (this.isEditableCell(y, x))
+                    this.qr.modules[x][y] = false;
+            }
+        }
+        this.render();
     }
 
     render() {
@@ -154,4 +174,43 @@ class MyQRCode {
     getQRCodeInstance() {
         return this.qr;
     }
+
+    generateQRCodeFromDrawing() {
+        const maskPattern = this.qr.usedMaskPattern ?? 0;
+
+        // もとの描画状態（マスク解除）からビット列を再構築
+        const positions = this.qr.getCodewordPositionMap();
+        const bits = positions.map(({ x, y, mask }) => {
+            const actual = this.qr.modules[y][x];
+            return mask ? (actual ? 0 : 1) : (actual ? 1 : 0);
+        });
+
+        const bytes = [];
+        for (let i = 0; i < bits.length; i += 8) {
+            const byte = bits.slice(i, i + 8);
+            while (byte.length < 8) byte.push(0);
+            bytes.push(parseInt(byte.join(""), 2));
+        }
+
+        // データコードワードの数だけ取り出す
+        const rsBlocks = QRRSBlock.getRSBlocks(this.version, this.correctLevel);
+        const dataCodewordCount = rsBlocks.reduce((sum, block) => sum + block.dataCount, 0);
+        const dataBytes = bytes.slice(0, dataCodewordCount);
+
+        // 誤り訂正コードワードを生成
+        const buffer = new QRBitBuffer();
+        dataBytes.forEach(b => buffer.put(b, 8));
+        const fullData = QRCodeModel.createBytes(buffer, rsBlocks);
+
+        // 新しいQRコードに反映
+        const newQR = new QRCodeModel(this.version, this.correctLevel);
+        newQR.dataCache = fullData;
+        newQR.makeImpl(false, maskPattern);
+
+        const clone = new MyQRCode("", this.version, this.cellSize, this.correctLevel, maskPattern);
+        clone.qr = newQR;
+        clone.render();
+        return clone;
+    }
+    
 }

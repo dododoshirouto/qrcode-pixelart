@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function onGenerateClick() {
     const rawUrl = document.getElementById("url").value.trim();
     const version = parseInt(document.getElementById("size").value);
-    const formattedUrl = addDelimiter(rawUrl);
+    const formattedUrl = decodeURIComponent(addDelimiter(rawUrl));
 
     qr = new MyQRCode(formattedUrl, version);
     qr.appendTo(document.getElementById("qr-output"));
@@ -24,6 +24,13 @@ function onGenerateClick() {
     const size = canvas.width;
 
     drawOverlayCanvas(cellCount, size);
+}
+
+function onGenerateModifiedClick() {
+    if (!qr) return;
+
+    const newQR = qr.generateQRCodeFromDrawing();
+    newQR.appendTo(document.getElementById("qr-modified-output"));
 }
 
 // ==============================
@@ -68,7 +75,7 @@ function drawOverlayCanvas(cellCount, canvasSize) {
     const pixelPositions = qr.getPixelDataPositions();
     console.log("pixel positions count:", pixelPositions.length);
 
-    for (const [x, y] of pixelPositions) {
+    for (const {x:x, y:y} of pixelPositions) {
         ctx.fillStyle = "rgba(255, 100, 100, 0.3)";
         ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
     }
