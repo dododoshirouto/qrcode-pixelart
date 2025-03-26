@@ -91,7 +91,7 @@ class MyQRCode {
             29: 1628, 30: 1732, 31: 1840, 32: 1952, 33: 2068, 34: 2188,
             35: 2303, 36: 2431, 37: 2563, 38: 2699, 39: 2809, 40: 2953 };
 
-        const baseCharCount = this.text.length;
+        const baseCharCount = this.text.length + 2; // 末尾の0x00終端バイトを含める
         const maxChar = this.capacityTable[this.version] || 1;
         this.pixelDataStartBit = baseCharCount * 8;
         this.pixelDataEndBit = maxChar * 8;
@@ -197,9 +197,17 @@ class MyQRCode {
         const dataCodewordCount = rsBlocks.reduce((sum, block) => sum + block.dataCount, 0);
         const dataBytes = bytes.slice(0, dataCodewordCount);
 
+        // ★ dataBytes からベースとドット絵部分を分離して再構成
+        const baseByteLength = this.pixelDataStartBit / 8;
+        const baseBytes = dataBytes.slice(0, baseByteLength);
+        baseBytes.push(0x00); // 終端バイト
+
+        const drawBytes = dataBytes.slice(baseByteLength+1); // 残りがドット絵部分
+        const mergedBytes = baseBytes.concat(drawBytes);
+
         // 誤り訂正コードワードを生成
         const buffer = new QRBitBuffer();
-        dataBytes.forEach(b => buffer.put(b, 8));
+        mergedBytes.forEach(b => buffer.put(b, 8));
         const fullData = QRCodeModel.createBytes(buffer, rsBlocks);
 
         // 新しいQRコードに反映
