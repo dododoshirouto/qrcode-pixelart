@@ -116,7 +116,10 @@ class MyQRCode {
     }
 
     enableDrawing() {
-        this.canvas.addEventListener('click', (e) => {
+        let isDrawing = false;
+        let drawValue = null;
+
+        const getCell = (e) => {
             const rect = this.canvas.getBoundingClientRect();
             const style = getComputedStyle(this.canvas);
             const padLeft = parseFloat(style.paddingLeft || 0);
@@ -127,16 +130,45 @@ class MyQRCode {
             const offsetY = (e.clientY - rect.top - padTop) * scaleY;
             const x = Math.floor(offsetX / this.cellSize);
             const y = Math.floor(offsetY / this.cellSize);
+            return { x, y };
+        };
 
-            console.log("[myqrcode.js] clicked:", x, y);
-
+        const handleDraw = (x, y) => {
             if (this.isEditableCell(x, y)) {
-                this.qr.modules[y][x] = !this.qr.modules[y][x];
+                if (drawValue === null) {
+                    drawValue = !this.qr.modules[y][x];
+                }
+                this.qr.modules[y][x] = drawValue;
                 this.render();
             }
+        };
+
+        this.canvas.addEventListener('mousedown', (e) => {
+            const { x, y } = getCell(e);
+            isDrawing = true;
+            drawValue = null;
+            handleDraw(x, y);
         });
 
-        
+        this.canvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing) return;
+            const { x, y } = getCell(e);
+            handleDraw(x, y);
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDrawing = false;
+            drawValue = null;
+        });
+
+        for (let y = 0; y < this.moduleCount; y++) {
+            for (let x = 0; x < this.moduleCount; x++) {
+                if (this.isEditableCell(y, x))
+                    this.qr.modules[x][y] = false;
+            }
+        }
+        this.render();
+
         for (let y = 0; y < this.moduleCount; y++) {
             for (let x = 0; x < this.moduleCount; x++) {
                 if (this.isEditableCell(y, x))
@@ -151,7 +183,8 @@ class MyQRCode {
             for (let col = 0; col < this.moduleCount; col++) {
                 const editable = this.isEditableCell(col, row);
                 const value = this.qr.modules[row][col];
-                this.ctx.fillStyle = editable ? (value ? "#000" : "#fff") : (value ? "#000" : "#ccc");
+                // this.ctx.fillStyle = editable ? (value ? "#000" : "#fff") : (value ? "#000" : "#ccc");
+                this.ctx.fillStyle = value ? "#000" : "#fff";
                 this.ctx.fillRect(col * this.cellSize, row * this.cellSize, this.cellSize, this.cellSize);
             }
         }
