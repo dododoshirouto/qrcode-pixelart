@@ -1,4 +1,4 @@
-let qr;
+var qr;
 
 // ==============================
 // 初期化処理（今は空）
@@ -40,21 +40,20 @@ function addDelimiter(url) {
 function drawOverlayCanvas(cellCount, canvasSize) {
     let overlay = document.getElementById("overlay-canvas");
 
-    // なければ作成
     if (!overlay) {
         overlay = document.createElement("canvas");
         overlay.id = "overlay-canvas";
         overlay.style.position = "absolute";
         overlay.style.top = "0";
         overlay.style.pointerEvents = "none";
+        overlay.style.display = "block"; // ← 明示的に表示！
         document.getElementById("qr-output").appendChild(overlay);
+        console.log("overlay canvas created");
     }
 
-    // canvas サイズ合わせる
     overlay.width = canvasSize;
     overlay.height = canvasSize;
 
-    // 左右中央に揃えるために canvas の位置と一致させる
     const baseCanvas = qr.getCanvas();
     if (baseCanvas) {
         const leftOffset = baseCanvas.offsetLeft;
@@ -66,8 +65,9 @@ function drawOverlayCanvas(cellCount, canvasSize) {
 
     const cellSize = canvasSize / cellCount;
 
-    // ドット絵に使えるセルをハイライト
     const pixelPositions = qr.getPixelDataPositions();
+    console.log("pixel positions count:", pixelPositions.length);
+
     for (const [x, y] of pixelPositions) {
         ctx.fillStyle = "rgba(255, 100, 100, 0.3)";
         ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
