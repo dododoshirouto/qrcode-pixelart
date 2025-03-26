@@ -1,4 +1,4 @@
-var qr;
+let qr;
 
 // ==============================
 // 初期化処理（今は空）
@@ -32,10 +32,10 @@ function onGenerateClick() {
 function addDelimiter(url) {
     if (!url) return "";
     const delim = url.includes("?") ? "&" : "?";
-    return url + delim;
+    url = url + delim;
+    url = url.replace(/\?&+$/, "?").replace(/&+$/, "&");
+    return url;
 }
-
-
 
 function drawOverlayCanvas(cellCount, canvasSize) {
     let overlay = document.getElementById("overlay-canvas");
@@ -66,12 +66,10 @@ function drawOverlayCanvas(cellCount, canvasSize) {
 
     const cellSize = canvasSize / cellCount;
 
-    for (let y = 0; y < cellCount; y++) {
-        for (let x = 0; x < cellCount; x++) {
-            if ((x + y) % 2 === 0) {
-                ctx.fillStyle = "rgba(0, 255, 255, 0.2)";
-                ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
-            }
-        }
+    // ドット絵に使えるセルをハイライト
+    const pixelPositions = qr.getPixelDataPositions();
+    for (const [x, y] of pixelPositions) {
+        ctx.fillStyle = "rgba(255, 100, 100, 0.3)";
+        ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
     }
 }
