@@ -19,3 +19,8 @@ aaa
 
 ## ライセンス
 
+僕が書いたところ - MIT License 2025 dododo-shirouto [@super_amateur_c](https://x.com/super_amateur_c)
+
+qrcode.js
+
+[https://github.com/davidshimjs/qrcodejs/tree/master](https://github.com/davidshimjs/qrcodejs/tree/master)

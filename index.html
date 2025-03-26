@@ -9,9 +9,10 @@
       href="https://dododoshirouto.github.io/dodo-simple.css/sample/dodo-simple.css"
     />
     <script src="https://mymp.dodoneko.site/new/scripts/ref.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="qrcode.js"></script>
 
     <link rel="stylesheet" href="style.css" />
+    <script src="myqrcode.js"></script>
     <script src="main.js"></script>
   </head>
   <body>
@@ -35,7 +36,7 @@
             for (let i=1; i<=40; i++) {
                 let option = document.createElement("option");
                 let size = i*4 + 17;
-                option.value = size;
+                option.value = i;
                 option.text = `${size}×${size} (バージョン${i})`;
                 elem_select.appendChild(option);
                 if (i==4) {
@@ -47,7 +48,9 @@
         <button type="button" onclick="onGenerateClick()">QR生成</button>
       </form>
 
-      <div id="qr-output" style="margin-top: 1em"></div>
+      <div id="qr-output" style="margin-top: 1em">
+        <canvas id="overlay-canvas" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
+      </div>
     </main>
   </body>
 </html>

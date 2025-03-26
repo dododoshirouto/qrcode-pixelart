@@ -1,7 +1,17 @@
-#qr-output img {
+#qr-output {
+    position: relative;
+}
+#qr-output canvas {
     min-width: 50vw;
     image-rendering: pixelated;
-
-    background: white;
     padding: calc(200% / 33);
+}
+#qr-output canvas:not([id]) {
+    background: white;
+
+    display: block !important;
+}
+
+#qr-output img {
+    display: none !important;
 }
