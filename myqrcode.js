@@ -1,3 +1,52 @@
+if (!QRCodeModel) {
+    console.error('qrcode.jsをmyqrcode.jsよりも先に読み込んで!');
+}
+
+QRCodeModel.prototype.getCodewordPositionMap = function () {
+    return this.codewordPositionMap || [];
+};
+
+const originalMapData = QRCodeModel.prototype.mapData;
+QRCodeModel.prototype.mapData = function (data, maskPattern) {
+    var inc = -1;
+    var row = this.moduleCount - 1;
+    var bitIndex = 7;
+    var byteIndex = 0;
+
+    this.codewordPositionMap = [];
+
+    for (var col = this.moduleCount - 1; col > 0; col -= 2) {
+        if (col == 6) col--;
+        while (true) {
+            for (var c = 0; c < 2; c++) {
+                if (this.modules[row][col - c] == null) {
+                    var dark = false;
+                    if (byteIndex < data.length) {
+                        dark = ((data[byteIndex] >>> bitIndex) & 1) == 1;
+                        this.codewordPositionMap.push([col - c, row]);
+                    }
+                    var mask = QRUtil.getMask(maskPattern, row, col - c);
+                    if (mask) {
+                        dark = !dark;
+                    }
+                    this.modules[row][col - c] = dark;
+                    bitIndex--;
+                    if (bitIndex == -1) {
+                        byteIndex++;
+                        bitIndex = 7;
+                    }
+                }
+            }
+            row += inc;
+            if (row < 0 || this.moduleCount <= row) {
+                row -= inc;
+                inc = -inc;
+                break;
+            }
+        }
+    }
+};
+
 class MyQRCode {
     constructor(text, version, cellSize = 8, correctLevel = QRCode.CorrectLevel.L) {
         this.text = text;
@@ -27,14 +76,12 @@ class MyQRCode {
             35: 2303, 36: 2431, 37: 2563, 38: 2699, 39: 2809, 40: 2953
         };
 
-        const baseCharCount = this.text.length; // URL全体の文字数（固定部分含む）
-        const maxBits = (this.capacityTable[this.version] || 1) * 8;
-        const usedBits = baseCharCount * 8;
-        const ratio = usedBits / maxBits;
+        const baseCharCount = this.text.length;
+        const maxChar = this.capacityTable[this.version] || 1;
+        const editableCharCount = maxChar - baseCharCount;
 
-        this.totalBits = this.qr.dataCache.length * 8;
-        this.pixelDataBitLength = Math.floor(this.totalBits * ratio);
-        this.pixelDataStartBit = this.totalBits - this.pixelDataBitLength;
+        this.pixelDataStartBit = baseCharCount * 8;
+        this.pixelDataEndBit = maxChar * 8;
     }
 
     getPixelDataText() {
@@ -42,35 +89,8 @@ class MyQRCode {
     }
 
     getPixelDataPositions() {
-        const result = [];
-        let bitIndex = 0;
-        let directionUp = true;
-
-        for (let x = this.moduleCount - 1; x > 0; x -= 2) {
-            if (x === 6) x--; // タイミングパターン列をスキップ
-
-            for (let yOffset = 0; yOffset < this.moduleCount; yOffset++) {
-                const y = directionUp ? this.moduleCount - 1 - yOffset : yOffset;
-
-                for (let col = 0; col < 2; col++) {
-                    const xx = x - col;
-                    const yy = y;
-
-                    // 範囲チェック
-                    if (xx < 0 || yy < 0 || xx >= this.moduleCount || yy >= this.moduleCount) continue;
-
-                    // 無条件でビット進める（マッピング再現）
-                    if (bitIndex >= this.pixelDataStartBit && bitIndex < this.totalBits) {
-                        result.push([xx, yy]);
-                    }
-
-                    bitIndex++;
-                }
-            }
-            directionUp = !directionUp;
-        }
-
-        return result;
+        const positions = this.qr.getCodewordPositionMap();
+        return positions.slice(this.pixelDataStartBit, this.pixelDataEndBit);
     }
 
     render() {
