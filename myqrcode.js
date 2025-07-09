@@ -60,12 +60,17 @@ QRCodeModel.prototype.mapData = function (data, maskPattern) {
 };
 
 class MyQRCode {
-    constructor(text, version, cellSize = 8, correctLevel = QRCode.CorrectLevel.L, fixedMask = null) {
+    constructor(text, version, { cellSize = 20, dotScalePositive = 1, dotScaleNegative = 1, dotShape = "square", colorPositive = "#000", colorNegative = "#fff", correctLevel = QRCode.CorrectLevel.L, fixedMask = null } = {}) {
         this.text = text;
         this.version = version;
         this.cellSize = cellSize;
         this.correctLevel = correctLevel;
         this.fixedMask = fixedMask; // ← 指定があれば使う！
+        this.dotScalePositive = dotScalePositive;
+        this.dotScaleNegative = dotScaleNegative;
+        this.dotShape = dotShape;
+        this.colorPositive = colorPositive;
+        this.colorNegative = colorNegative;
 
         this.qr = new QRCodeModel(this.version, this.correctLevel);
         this.qr.addData(this.text);
@@ -84,12 +89,14 @@ class MyQRCode {
         this.canvas.style.display = "block";
         this.ctx = this.canvas.getContext("2d");
 
-        this.capacityTable = { 1: 17, 2: 32, 3: 53, 4: 78, 5: 106, 6: 134, 7: 154, 8: 192,
+        this.capacityTable = {
+            1: 17, 2: 32, 3: 53, 4: 78, 5: 106, 6: 134, 7: 154, 8: 192,
             9: 230, 10: 271, 11: 321, 12: 367, 13: 425, 14: 458, 15: 520,
             16: 586, 17: 644, 18: 718, 19: 792, 20: 858, 21: 929, 22: 1003,
             23: 1091, 24: 1171, 25: 1273, 26: 1367, 27: 1465, 28: 1528,
             29: 1628, 30: 1732, 31: 1840, 32: 1952, 33: 2068, 34: 2188,
-            35: 2303, 36: 2431, 37: 2563, 38: 2699, 39: 2809, 40: 2953 };
+            35: 2303, 36: 2431, 37: 2563, 38: 2699, 39: 2809, 40: 2953
+        };
 
         const baseCharCount = this.text.length + 2; // 末尾の0x00終端バイトを含める
         const maxChar = this.capacityTable[this.version] || 1;
@@ -179,13 +186,23 @@ class MyQRCode {
     }
 
     render() {
+        this.ctx.reset();
+        // this.ctx.fillStyle = "#fff";
+        // this.ctx.fillRect(0, 0, this.moduleCount*this.cellSize, this.moduleCount*this.cellSize);
         for (let row = 0; row < this.moduleCount; row++) {
             for (let col = 0; col < this.moduleCount; col++) {
                 const editable = this.isEditableCell(col, row);
                 const value = this.qr.modules[row][col];
                 // this.ctx.fillStyle = editable ? (value ? "#000" : "#fff") : (value ? "#000" : "#ccc");
-                this.ctx.fillStyle = value ? "#000" : "#fff";
-                this.ctx.fillRect(col * this.cellSize, row * this.cellSize, this.cellSize, this.cellSize);
+                this.ctx.fillStyle = value ? this.colorPositive : this.colorNegative;
+                this.dotScale = value ? this.dotScalePositive : this.dotScaleNegative;
+                if (this.dotShape == "square" || (row < 7 && col < 7) || (row < 7 && (this.moduleCount - col) < 8) || ((this.moduleCount - row) < 8 && col < 7)) {
+                    this.ctx.fillRect((col) * this.cellSize, (row) * this.cellSize, this.cellSize, this.cellSize);
+                } else {
+                    this.ctx.beginPath();
+                    this.ctx.ellipse((col + 0.5) * this.cellSize, (row + 0.5) * this.cellSize, this.cellSize / 2 * this.dotScale, this.cellSize / 2 * this.dotScale, 0, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
             }
         }
     }
@@ -235,7 +252,7 @@ class MyQRCode {
         const baseBytes = dataBytes.slice(0, baseByteLength);
         baseBytes.push(0x00); // 終端バイト
 
-        const drawBytes = dataBytes.slice(baseByteLength+1); // 残りがドット絵部分
+        const drawBytes = dataBytes.slice(baseByteLength + 1); // 残りがドット絵部分
         const mergedBytes = baseBytes.concat(drawBytes);
 
         // 誤り訂正コードワードを生成
@@ -248,10 +265,17 @@ class MyQRCode {
         newQR.dataCache = fullData;
         newQR.makeImpl(false, maskPattern);
 
-        const clone = new MyQRCode("", this.version, this.cellSize, this.correctLevel, maskPattern);
+        const cellSize = parseInt(document.getElementById("cell_size").value);
+        const colorPositive = document.getElementById("color_posi").value;
+        const colorNegative = document.getElementById("color_nega").value;
+        const dotShape = document.getElementById("shape").value;
+        const dotScaleNegative = parseFloat(document.getElementById("dot_scale_nega").value);
+        const dotScalePositive = parseFloat(document.getElementById("dot_scale_posi").value);
+
+        const clone = new MyQRCode("", this.version, { cellSize, dotScalePositive, dotScaleNegative, dotShape, colorPositive, colorNegative, correctLevel: this.correctLevel, fixedMask: this.fixedMask });
         clone.qr = newQR;
         clone.render();
         return clone;
     }
-    
+
 }

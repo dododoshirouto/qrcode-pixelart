@@ -1,71 +1,84 @@
 <html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <title>QRコードにドット絵を描くツール @dododo-shirouto</title>
 
-    <link rel="stylesheet" href="https://cdn.simplecss.org/simple.css" />
-    <link
-      rel="stylesheet"
-      href="https://dododoshirouto.github.io/dodo-simple.css/sample/dodo-simple.css"
-    />
-    <script src="https://mymp.dodoneko.site/new/scripts/ref.js"></script>
-    <script src="qrcode.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fastclick/0.6.0/fastclick.min.js"></script>
+<head>
+  <meta charset="UTF-8" />
+  <title>QRコードにドット絵を描くツール @dododo-shirouto</title>
 
-    <link rel="stylesheet" href="style.css" />
-    <script src="myqrcode.js"></script>
-    <script src="main.js"></script>
-    <script>
-      FastClick.attach(document.body);
-    </script>
-  </head>
-  <body>
-    <main>
-      <h1>QRコードにドット絵を描くツール</h1>
-      <div id="qr-form">
-        <label for="url">URL入力：</label>
-        <input
-          type="text"
-          id="url"
-          name="url"
-          placeholder="https://example.com"
-          required
-        />
+  <link rel="stylesheet" href="https://cdn.simplecss.org/simple.css" />
+  <link rel="stylesheet" href="https://dododoshirouto.github.io/dodo-simple.css/sample/dodo-simple.css" />
+  <script src="https://mymp.dodoneko.site/new/scripts/ref.js"></script>
+  <script src="qrcode.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fastclick/0.6.0/fastclick.min.js"></script>
 
-        <label for="size">セル数：</label>
-        <select id="size"></select>
-        <script>
-            let elem_select = document.querySelector("#size");
-            for (let i=2; i<=5; i++) {
-                let option = document.createElement("option");
-                let size = i*4 + 17;
-                option.value = i;
-                option.text = `${size}×${size} (バージョン${i})`;
-                elem_select.appendChild(option);
-                if (i==4) {
-                    option.selected = true;
-                }
-            }
-        </script>
+  <link rel="stylesheet" href="style.css" />
+  <script src="myqrcode.js"></script>
+  <script src="main.js"></script>
+  <script>
+    FastClick.attach(document.body);
+  </script>
+</head>
 
-        <button type="button" onclick="onGenerateClick()">QR生成</button>
-      </div>
+<body>
+  <main>
+    <h1>QRコードにドット絵を描くツール</h1>
+    <div id="qr-form">
+      <label for="url">URL入力：</label>
+      <input type="text" id="url" name="url" placeholder="https://example.com" required />
 
-      <div id="qr-output" style="margin-top: 1em">
-        <canvas id="overlay-canvas" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
-      </div>
+      <label for="size">セル数：</label>
+      <select id="size"></select>
+      <script>
+        let elem_select = document.querySelector("#size");
+        for (let i = 2; i <= 5; i++) {
+          let option = document.createElement("option");
+          let size = i * 4 + 17;
+          option.value = i;
+          option.text = `${size}×${size} (バージョン${i})`;
+          elem_select.appendChild(option);
+          if (i == 4) {
+            option.selected = true;
+          }
+        }
+      </script>
 
-      <button type="button" onclick="onGenerateModifiedClick()">描いたドット絵で再生成</button>
-      <div id="qr-modified-output" style="margin-top: 1em;"></div>
+      <label for="size">セルサイズ：</label>
+      <input type="number" id="cell_size" name="cell_size" value="8" min="1" step="1" />
 
-      
-    </main>
+      <label>色：</label>
+      <input type="color" id="color_posi" name="color_posi" value="#000000" />
+      <input type="color" id="color_nega" name="color_nega" value="#ffffff" />
 
-    <div id="footer">
-      <p>MIT License 2025 dododo-shirouto <a href="https://x.com/super_amateur_c">@super_amateur_c</a></p>
-      <p><a href="https://github.com/dododoshirouto/qrcode-pixelart/">GitHub repository</a></p>
-      <p>How to use video</p>
-      <p><video id="howtousevideo" muted playsinline autoplay loop controls src="QRコードにドット絵を描くツール @dododo-shirouto - Google Chrome 2025-03-27 04-26-12-00.00.00.000-00.01.11.609.mp4"></video></p>
+      <label for="shape">セルの形：</label>
+      <select id="shape">
+        <option value="square">正方形</option>
+        <option value="circle">円</option>
+      </select>
+
+      <label>ドットサイズ：</label>
+      <input type="number" id="dot_scale_posi" name="dot_scale_posi" value="1" min="0" step="0.1" />
+      <input type="number" id="dot_scale_nega" name="dot_scale_nega" value="1" min="0" step="0.1" />
+
+      <button type="button" onclick="onGenerateClick()">QR生成</button>
     </div>
-  </body>
+
+    <div id="qr-output" style="margin-top: 1em">
+      <canvas id="overlay-canvas" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
+    </div>
+
+    <button type="button" onclick="onGenerateModifiedClick()">描いたドット絵で再生成</button>
+    <div id="qr-modified-output" style="margin-top: 1em;"></div>
+
+
+  </main>
+
+  <div id="footer">
+    <p>MIT License 2025 dododo-shirouto <a href="https://x.com/super_amateur_c">@super_amateur_c</a></p>
+    <p><a href="https://github.com/dododoshirouto/qrcode-pixelart/">GitHub repository</a></p>
+    <p>How to use video</p>
+    <p><video id="howtousevideo" muted playsinline autoplay loop controls
+        src="QRコードにドット絵を描くツール @dododo-shirouto - Google Chrome 2025-03-27 04-26-12-00.00.00.000-00.01.11.609.mp4"></video>
+    </p>
+  </div>
+</body>
+
 </html>

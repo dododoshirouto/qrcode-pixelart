@@ -14,8 +14,14 @@ function onGenerateClick() {
     const rawUrl = document.getElementById("url").value.trim();
     const version = parseInt(document.getElementById("size").value);
     const formattedUrl = decodeURIComponent(addDelimiter(rawUrl));
+    const cellSize = parseInt(document.getElementById("cell_size").value);
+    const colorPositive = document.getElementById("color_posi").value;
+    const colorNegative = document.getElementById("color_nega").value;
+    const dotShape = document.getElementById("shape").value;
+    const dotScaleNegative = parseFloat(document.getElementById("dot_scale_nega").value);
+    const dotScalePositive = parseFloat(document.getElementById("dot_scale_posi").value);
 
-    qr = new MyQRCode(formattedUrl, version);
+    qr = new MyQRCode(formattedUrl, version, { cellSize, colorPositive, colorNegative, dotShape, dotScaleNegative, dotScalePositive });
     qr.appendTo(document.getElementById("qr-output"));
 
     // overlay 描画
@@ -75,7 +81,7 @@ function drawOverlayCanvas(cellCount, canvasSize) {
     const pixelPositions = qr.getPixelDataPositions();
     console.log("pixel positions count:", pixelPositions.length);
 
-    for (const {x:x, y:y} of pixelPositions) {
+    for (const { x: x, y: y } of pixelPositions) {
         ctx.fillStyle = "rgba(255, 100, 100, 0.3)";
         ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
     }
