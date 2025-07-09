@@ -17,3 +17,15 @@
 #qr-output img {
     display: none !important;
 }
+
+video#howtousevideo {
+    min-width: 30vw;
+    max-width: 100%;
+    width: 300px;
+    border: 1px solid gray;
+    border-radius: 6px;
+}
+
+#footer * {
+    font-size: 0.8em;
+}
